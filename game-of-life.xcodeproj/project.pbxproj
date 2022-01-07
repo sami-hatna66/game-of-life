@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		26A8A52C2788A25600435446 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26A8A52B2788A25600435446 /* main.cpp */; };
+		26A8A53D2788A39F00435446 /* SDL2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 26A8A5332788A27600435446 /* SDL2.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -23,8 +24,11 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		2669C0862788DDC600F3E5CE /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		26A8A5282788A25600435446 /* game-of-life */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "game-of-life"; sourceTree = BUILT_PRODUCTS_DIR; };
 		26A8A52B2788A25600435446 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		26A8A5332788A27600435446 /* SDL2.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL2.framework; path = ../../../../Library/Frameworks/SDL2.framework; sourceTree = "<group>"; };
+		26A8A5402788A3F500435446 /* game-of-life.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "game-of-life.entitlements"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -32,6 +36,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				26A8A53D2788A39F00435446 /* SDL2.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -41,8 +46,10 @@
 		26A8A51F2788A25600435446 = {
 			isa = PBXGroup;
 			children = (
+				2669C0862788DDC600F3E5CE /* README.md */,
 				26A8A52A2788A25600435446 /* game-of-life */,
 				26A8A5292788A25600435446 /* Products */,
+				26A8A5322788A27600435446 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -57,9 +64,18 @@
 		26A8A52A2788A25600435446 /* game-of-life */ = {
 			isa = PBXGroup;
 			children = (
+				26A8A5402788A3F500435446 /* game-of-life.entitlements */,
 				26A8A52B2788A25600435446 /* main.cpp */,
 			);
 			path = "game-of-life";
+			sourceTree = "<group>";
+		};
+		26A8A5322788A27600435446 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				26A8A5332788A27600435446 /* SDL2.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -240,9 +256,14 @@
 		26A8A5302788A25600435446 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = "game-of-life/game-of-life.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = R3WSLZUG53;
 				ENABLE_HARDENED_RUNTIME = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(LOCAL_LIBRARY_DIR)/Frameworks",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -250,9 +271,14 @@
 		26A8A5312788A25600435446 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = "game-of-life/game-of-life.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = R3WSLZUG53;
 				ENABLE_HARDENED_RUNTIME = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(LOCAL_LIBRARY_DIR)/Frameworks",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
