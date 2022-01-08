@@ -170,6 +170,7 @@ void lifePass() {
             
             bool below = (i == mapHeight - 1) ? copy[0][j].getStatus() : copy[i + 1][j].getStatus();
             
+            // wrap-around
             bool upleftdiag = false;
             if (!(i == 0 & j == 0)) {
                 upleftdiag = (j == 0) ? copy[i - 1][mapWidth - 1].getStatus() : ((i == 0) ?  copy[mapHeight - 1][j - 1].getStatus() : copy[i - 1][j - 1].getStatus());
