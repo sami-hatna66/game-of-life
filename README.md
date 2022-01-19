@@ -1,6 +1,6 @@
 #  The Game of Life
 
-The Game of Life is a cellular automaton developed by mathematician John Conway. A cellular automaton is a collection of cells, each of which has a state which is determined by its own state and the state of its neighbouring cells. In the Game of Life there are four rules determining whether a cell is either alive or dead:
+The Game of Life is a cellular automaton developed by mathematician John Conway. A cellular automaton is a collection of cells, each of which has a state which is determined by its own state and the state of its neighbouring cells. In the Game of Life there are four rules determining whether a cell is either alive or dead: 
 
 1. A live cell with less than two living neighbours dies (underpopulation)
 2. A live cell with three or four live neighbours stays alive
