@@ -10,17 +10,17 @@
 #include <iostream>
 #include <random>
 
-constexpr const int MAPWIDTH = 160; // num of cells along x
+constexpr const int MAPWIDTH = 170; // num of cells along x
 constexpr const int MAPHEIGHT = 160; // num of cells along y
-constexpr const int SCALE = 5; // size of individual cell
+constexpr const int SCALE = 3; // size of individual cell
 constexpr const int DELAY = 5000; // time between each lifecycle
 constexpr const int CHANCEOFLIFE = 25; // probability of a cell being alive when doing random init
 
 // Fill window with random living cells
 void initRandomMap(std::array<std::array<bool, MAPWIDTH>, MAPHEIGHT> &map) {
     std::random_device rd;
-    for (int i = 0; i < MAPWIDTH; i++) {
-        for (int j = 0; j < MAPHEIGHT; j++) {
+    for (int i = 0; i < MAPHEIGHT; i++) {
+        for (int j = 0; j < MAPWIDTH; j++) {
             std::mt19937 gen(rd());
             std::uniform_int_distribution<> distr(0, 100);
             int result = distr(gen);
@@ -133,11 +133,11 @@ void draw(SDL_Renderer *&render, std::array<std::array<bool, MAPWIDTH>, MAPHEIGH
 
     SDL_SetRenderDrawColor(render, 0, 0, 0, 255);
     SDL_Rect r;
-    for (int i = 0; i < MAPWIDTH; i++) {
-        for (int j = 0; j < MAPHEIGHT; j++) {
+    for (int i = 0; i < MAPHEIGHT; i++) {
+        for (int j = 0; j < MAPWIDTH; j++) {
             if (map[i][j]) {
-                r.x = i * SCALE;
-                r.y = j * SCALE;
+                r.x = j * SCALE;
+                r.y = i * SCALE;
                 r.w = SCALE;
                 r.h = SCALE;
                 SDL_RenderFillRect(render, &r);
