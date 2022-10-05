@@ -5,98 +5,32 @@
 //  Created by Sami Hatna on 06/01/2022.
 //
 
-#include <iostream>
 #include <SDL2/SDL.h>
 #include <array>
+#include <iostream>
 #include <random>
-using namespace std;
 
-void init();
-void draw();
-void close();
-void initScreenMap();
-void lifePass();
-void initGosperGliderGun();
-void initSimkinGliderGun();
-void initPufferTrain();
-void initEmptyMap();
+constexpr const int MAPWIDTH = 160; // num of cells along x
+constexpr const int MAPHEIGHT = 160; // num of cells along y
+constexpr const int SCALE = 5; // size of individual cell
+constexpr const int DELAY = 5000; // time between each lifecycle
+constexpr const int CHANCEOFLIFE = 25; // probability of a cell being alive when doing random init
 
-SDL_Window* win = NULL;
-SDL_Surface* surface = NULL;
-SDL_Renderer* render = NULL;
-
-// CONFIG
-const int mapWidth = 150; // num of cells along x
-const int mapHeight = 102; // num of cells along y
-const int scale = 5; // scale of each cell
-const int delay = 25000; // time between each lifecycle
-
-// cell object
-class cell {
-private:
-    bool status;
-public:
-    // rect is public because renderer requires address of rect which can't be acquired through a temp return value
-    SDL_Rect rect;
-    cell(SDL_Rect r, bool s) {
-        rect = r;
-        status = s;
-    }
-    cell() {
-        status = false;
-    }
-    void setStatus(bool newStatus) {
-        status = newStatus;
-    }
-    bool getStatus() {
-        return status;
-    }
-};
-
-// array of cell objects
-array<array<cell, mapWidth>, mapHeight> screenMap = {};
-
-// init SDL window
-void init() {
-    SDL_Init(SDL_INIT_VIDEO);
-    win = SDL_CreateWindow("The Game of Life", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, mapWidth * scale, mapHeight * scale, SDL_WINDOW_SHOWN);
-}
-
-// fill window with random living cells
-void initScreenMap() {
-    for (int i = 0; i < mapHeight; i++) {
-        for (int j = 0; j < mapWidth; j++) {
-            SDL_Rect r;
-            r.x = j * scale; r.y = i * scale; r.w = scale; r.h = scale;
-            screenMap[i][j].rect = r;
-            
-            random_device rd;
-            mt19937 gen(rd());
-            uniform_int_distribution<> distr(0, 100);
+// Fill window with random living cells
+void initRandomMap(std::array<std::array<bool, MAPWIDTH>, MAPHEIGHT> &map) {
+    std::random_device rd;
+    for (int i = 0; i < MAPWIDTH; i++) {
+        for (int j = 0; j < MAPHEIGHT; j++) {
+            std::mt19937 gen(rd());
+            std::uniform_int_distribution<> distr(0, 100);
             int result = distr(gen);
-            screenMap[i][j].setStatus(result >= 25 ? false : true);
-        }
-    }
-}
-
-// create an map with no living cells
-// helper for Simkin, Gosper and Puffer functions
-void initEmptyMap() {
-    for (int i = 0; i < mapHeight; i++) {
-        for (int j = 0; j < mapWidth; j++) {
-            SDL_Rect r;
-            r.x = j * scale; r.y = i * scale; r.w = scale; r.h = scale;
-            screenMap[i][j].rect = r;
-            
-            screenMap[i][j].setStatus(false);
+            map[i][j] = (result < CHANCEOFLIFE);
         }
     }
 }
 
 // create empty map and populate with Simkin's glider gun pattern (2015)
-void initSimkinGliderGun() {
-    initEmptyMap();
-    
+void initSimkinGliderGun(std::array<std::array<bool, MAPWIDTH>, MAPHEIGHT> &map) {
     int gunCoords[31][2] = {
         {47, 41}, {47, 42}, {48, 41}, {48, 42}, {47, 48},
         {47, 49}, {48, 48}, {48, 49}, {50, 46}, {50, 45},
@@ -108,14 +42,12 @@ void initSimkinGliderGun() {
     };
     
     for (int k = 0; k < 31; k++) {
-        screenMap[gunCoords[k][0]][gunCoords[k][1]].setStatus(true);
+        map[gunCoords[k][0]][gunCoords[k][1]] = 1;
     }
 }
 
 // create empty map and populate with Gosper's glider gun pattern (1970)
-void initGosperGliderGun() {
-    initEmptyMap();
-    
+void initGosperGliderGun(std::array<std::array<bool, MAPWIDTH>, MAPHEIGHT> &map) {
     int gunCoords[45][2] = {
         {56, 42}, {56, 43}, {57, 42}, {57, 43}, {56, 53},
         {55, 53}, {57, 53}, {54, 54}, {58, 54}, {53, 55},
@@ -129,14 +61,12 @@ void initGosperGliderGun() {
     };
     
     for (int k = 0; k < 45; k++) {
-        screenMap[gunCoords[k][0]][gunCoords[k][1]].setStatus(true);
+        map[gunCoords[k][0]][gunCoords[k][1]] = 1;
     }
 }
 
 // create empty map and populate with Gosper's Puffer 1 pattern (1971)
-void initPufferTrain() {
-    initEmptyMap();
-    
+void initPufferTrain(std::array<std::array<bool, MAPWIDTH>, MAPHEIGHT> &map) {
     int pufferCoords[44][2] = {
         {42, 2}, {43, 3}, {43, 4}, {43, 5}, {43, 6},
         {43, 7}, {43, 8}, {42, 8}, {41, 8}, {40, 7},
@@ -150,130 +80,117 @@ void initPufferTrain() {
     };
     
     for (int k = 0; k < 44; k++) {
-        screenMap[pufferCoords[k][0]][pufferCoords[k][1]].setStatus(true);
+        map[pufferCoords[k][0]][pufferCoords[k][1]] = 1;
     }
 }
 
-// one pass in the cellular lifecycle
-void lifePass() {
-    array<array<cell, mapWidth>, mapHeight> copy = screenMap;
-    
-    for (int i = 0; i < mapHeight; i++) { // row
-        for (int j = 0; j < mapWidth; j++) { // column
+// One pass in the cellular lifecycle
+void lifePass(std::array<std::array<bool, MAPWIDTH>, MAPHEIGHT> &map) {
+    std::array<std::array<bool, MAPWIDTH>, MAPHEIGHT> copy = map;
+
+    for (int row = 0; row < MAPHEIGHT; row++) { // row
+        for (int col = 0; col < MAPWIDTH; col++) { // column
+
             int liveNeighbourCount = 0;
-            
-            bool left = (j == 0) ? copy[i][mapWidth - 1].getStatus() : copy[i][j - 1].getStatus();
-            
-            bool right = (j == mapWidth - 1) ? copy[i][0].getStatus() : copy[i][j + 1].getStatus();
-            
-            bool above = (i == 0) ? copy[mapHeight - 1][j].getStatus() : copy[i - 1][j].getStatus();
-            
-            bool below = (i == mapHeight - 1) ? copy[0][j].getStatus() : copy[i + 1][j].getStatus();
-            
-            // wrap-around
-            bool upleftdiag = false;
-            if (!(i == 0 & j == 0)) {
-                upleftdiag = (j == 0) ? copy[i - 1][mapWidth - 1].getStatus() : ((i == 0) ?  copy[mapHeight - 1][j - 1].getStatus() : copy[i - 1][j - 1].getStatus());
+            // Get cell neighbours
+            // Wraparound if necessary
+            int neighbours[8] = {
+                copy[row - 1 < 0 ? MAPHEIGHT - 1 : row - 1][col - 1 < 0 ? MAPWIDTH - 1 : col - 1],
+                copy[row - 1 < 0 ? MAPHEIGHT - 1 : row - 1][col],
+                copy[row - 1 < 0 ? MAPHEIGHT - 1 : row - 1][col + 1 >= MAPWIDTH ? 0 : col + 1],
+                copy[row][col + 1 >= MAPWIDTH ? 0 : col + 1],
+                copy[row + 1 >= MAPHEIGHT ? 0 : row + 1][col + 1 >= MAPWIDTH ? 0 : col + 1],
+                copy[row + 1 >= MAPHEIGHT ? 0 : row + 1][col],
+                copy[row + 1 >= MAPHEIGHT ? 0 : row + 1][col - 1 < 0 ? MAPWIDTH - 1 : col - 1],
+                copy[row][col - 1 < 0 ? MAPWIDTH - 1 : col - 1]
+            };
+            for (auto neighbour : neighbours) {
+                liveNeighbourCount += neighbour;
             }
-                
-            bool uprightdiag = false;
-            if (!(i == 0 & j == mapWidth - 1)) {
-                uprightdiag = (j == mapWidth - 1) ? copy[i - 1][0].getStatus() : ((i == 0) ? copy[mapHeight - 1][j + 1].getStatus() : copy[i - 1][j + 1].getStatus());
-            }
-                
-            bool downleftdiag = false;
-            if (!(i == mapHeight - 1 & j == 0)) {
-                downleftdiag = (j == 0) ? copy[i + 1][mapWidth - 1].getStatus() : ((i == mapHeight - 1) ? copy[0][j - 1].getStatus() : copy[i + 1][j - 1].getStatus());
-            }
-            
-            bool downrightdiag = false;
-            if (!(i == mapHeight - 1 &  j == mapWidth - 1)) {
-                downrightdiag = (j == mapWidth - 1) ? copy[i + 1][0].getStatus() : ((i == mapHeight - 1) ? copy[0][j + 1].getStatus() : copy[i + 1][j + 1].getStatus());
-            }
-                
-            bool boolList[8] = {above, below, left, right, upleftdiag, uprightdiag, downleftdiag, downrightdiag};
-            
-            for (int i = 0; i < sizeof(boolList); i++) {
-                if (boolList[i]) {
-                    liveNeighbourCount++;
-                }
-            }
-            
-            if (screenMap[i][j].getStatus()) {
-                if (liveNeighbourCount < 2) {
-                    screenMap[i][j].setStatus(false);
-                }
-                else if (liveNeighbourCount > 3) {
-                    screenMap[i][j].setStatus(false);
-                }
-            }
-            else {
-                if (liveNeighbourCount == 3) {
-                    screenMap[i][j].setStatus(true);
-                }
+
+            if (map[row][col] && (liveNeighbourCount < 2 || liveNeighbourCount > 3)) {
+                map[row][col] = false;
+            } else if (liveNeighbourCount == 3) {
+                map[row][col] = true;
             }
         }
     }
 }
 
-// draw frame
-void draw() {
+// Initialise SDL components
+void init(SDL_Window *&win, SDL_Renderer *&render) {
+    SDL_Init(SDL_INIT_VIDEO);
+    win = SDL_CreateWindow("Game of Life", SDL_WINDOWPOS_UNDEFINED,
+                           SDL_WINDOWPOS_UNDEFINED, MAPWIDTH * SCALE,
+                           MAPHEIGHT * SCALE, SDL_WINDOW_SHOWN);
+    render = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED);
+}
+
+// Draw frame
+void draw(SDL_Renderer *&render, std::array<std::array<bool, MAPWIDTH>, MAPHEIGHT> map) {
     SDL_SetRenderDrawColor(render, 255, 255, 255, 255);
     SDL_RenderClear(render);
-    
-    for (int i = 0; i < mapHeight; i++) {
-        for (int j = 0; j < mapWidth; j++) {
-            if (screenMap[i][j].getStatus()) {
-                SDL_SetRenderDrawColor(render, 0, 0, 0, 255);
-                SDL_RenderFillRect(render, &screenMap[i][j].rect);
+
+    SDL_SetRenderDrawColor(render, 0, 0, 0, 255);
+    SDL_Rect r;
+    for (int i = 0; i < MAPWIDTH; i++) {
+        for (int j = 0; j < MAPHEIGHT; j++) {
+            if (map[i][j]) {
+                r.x = i * SCALE;
+                r.y = j * SCALE;
+                r.w = SCALE;
+                r.h = SCALE;
+                SDL_RenderFillRect(render, &r);
             }
         }
     }
-    
+
     SDL_RenderPresent(render);
 }
 
-void close() {
+void close(SDL_Window *win, SDL_Renderer *render) {
+    SDL_DestroyRenderer(render);
     SDL_DestroyWindow(win);
     SDL_Quit();
 }
 
 int main() {
-    init();
-    render = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED);
+    SDL_Window *win = NULL;
+    SDL_Renderer *render = NULL;
+    init(win, render);
 
-    // create random board of cells
-    initScreenMap();
-
-    // create specific patterns
-    //initGosperGliderGun();
-    //initPufferTrain();
-    //initSimkinGliderGun();
-
-    draw();
+    std::array<std::array<bool, MAPWIDTH>, MAPHEIGHT> map = {};
     
-    // Main Loop
-    int count = 0;
-    bool isquit = false;
+    initRandomMap(map);
+    
+    // create specific patterns
+    //initGosperGliderGun(map);
+    //initPufferTrain(map);
+    //initSimkinGliderGun(map);
+
+    draw(render, map);
+
+    int timeCounter = 0;
+    bool isQuit = false;
     SDL_Event event;
-    while (!isquit) {
-        if (SDL_PollEvent( & event)) {
+
+    // Main loop
+    while (!isQuit) {
+        if (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
-                isquit = true;
+                isQuit = true;
             }
         }
-        
-        if (count >= delay) {
-            count = 0;
-            lifePass();
-            draw();
-        }
-        else {
-            count++;
+
+        if (timeCounter >= DELAY) {
+            timeCounter = 0;
+            lifePass(map);
+            draw(render, map);
+        } else {
+            timeCounter++;
         }
     }
-    
-    close();
-    
+
+    close(win, render);
     return 0;
 }
