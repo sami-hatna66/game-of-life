@@ -13,7 +13,7 @@ My implementation of the Game of Life is written in C++, using SDL2 for the 2D g
 
 ## Demo
 
-https://user-images.githubusercontent.com/88731772/148647309-25ecf2e9-f702-4a63-b524-856868ee2866.mp4
+https://user-images.githubusercontent.com/88731772/194124998-b5daa4a7-f50e-41ea-9812-5771537cd215.mp4
 
 ***Note on border rules:*** *John Conway never specified what happens to cells at the border of the grid, as his theoretical model was supposed to take place in an infinite universe. However, because of the limitations of computers, there must be some kind of border to our grid. For my implementation, I decided to have the grid wraparound at each edge, although other implementations choose to just have all border cells be dead.*
 
