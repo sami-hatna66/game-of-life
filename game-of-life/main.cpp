@@ -9,7 +9,10 @@
 #include <array>
 #include <iostream>
 #include <random>
+#include <chrono>
+#include <thread>
 
+const int NUMTHREADS = std::thread::hardware_concurrency();
 constexpr const int MAPWIDTH = 170; // num of cells along x
 constexpr const int MAPHEIGHT = 160; // num of cells along y
 constexpr const int SCALE = 3; // size of individual cell
@@ -84,28 +87,17 @@ void initPufferTrain(std::array<std::array<bool, MAPWIDTH>, MAPHEIGHT> &map) {
     }
 }
 
-// One pass in the cellular lifecycle
-void lifePass(std::array<std::array<bool, MAPWIDTH>, MAPHEIGHT> &map) {
-    std::array<std::array<bool, MAPWIDTH>, MAPHEIGHT> copy = map;
-
-    for (int row = 0; row < MAPHEIGHT; row++) { // row
-        for (int col = 0; col < MAPWIDTH; col++) { // column
-
+void lifeKernel(std::array<std::array<bool, MAPWIDTH>, MAPHEIGHT> &map,
+                const std::array<std::array<bool, MAPWIDTH>, MAPHEIGHT> &copy,
+                const int startRow, const int endRow) {
+    for (int row = startRow; row < endRow; row++) {
+        for (int col = 0; col < MAPWIDTH; col++) {
             int liveNeighbourCount = 0;
-            // Get cell neighbours
-            // Wraparound if necessary
-            int neighbours[8] = {
-                copy[row - 1 < 0 ? MAPHEIGHT - 1 : row - 1][col - 1 < 0 ? MAPWIDTH - 1 : col - 1],
-                copy[row - 1 < 0 ? MAPHEIGHT - 1 : row - 1][col],
-                copy[row - 1 < 0 ? MAPHEIGHT - 1 : row - 1][col + 1 >= MAPWIDTH ? 0 : col + 1],
-                copy[row][col + 1 >= MAPWIDTH ? 0 : col + 1],
-                copy[row + 1 >= MAPHEIGHT ? 0 : row + 1][col + 1 >= MAPWIDTH ? 0 : col + 1],
-                copy[row + 1 >= MAPHEIGHT ? 0 : row + 1][col],
-                copy[row + 1 >= MAPHEIGHT ? 0 : row + 1][col - 1 < 0 ? MAPWIDTH - 1 : col - 1],
-                copy[row][col - 1 < 0 ? MAPWIDTH - 1 : col - 1]
-            };
-            for (auto neighbour : neighbours) {
-                liveNeighbourCount += neighbour;
+            int neighbourCoords[8][2] = {{1,0},{1,1},{0,1},{-1,1},{-1,0},{-1,-1},{0,-1},{1,-1}};
+            for (auto coord : neighbourCoords) {
+                coord[0] = (row + coord[0]) % MAPHEIGHT;
+                coord[1] = (col + coord[1]) % MAPWIDTH;
+                liveNeighbourCount += copy[coord[0]][coord[1]];
             }
 
             if (map[row][col] && (liveNeighbourCount < 2 || liveNeighbourCount > 3)) {
@@ -114,6 +106,28 @@ void lifePass(std::array<std::array<bool, MAPWIDTH>, MAPHEIGHT> &map) {
                 map[row][col] = true;
             }
         }
+    }
+}
+
+// One pass in the cellular lifecycle
+void lifePass(std::array<std::array<bool, MAPWIDTH>, MAPHEIGHT> &map) {
+    std::array<std::array<bool, MAPWIDTH>, MAPHEIGHT> copy = map;
+
+    const int rowsPerThread = (map.size() + NUMTHREADS - 1) / NUMTHREADS;
+
+    std::vector<std::thread> threads;
+    threads.reserve(NUMTHREADS);
+
+    for (int i = 0; i < NUMTHREADS; i++) {
+        const int startRow = i * rowsPerThread;
+        const int endRow = std::min((i + 1) * rowsPerThread, (int)map.size());
+        threads.push_back(std::thread(lifeKernel, std::ref(map),
+                                      std::cref(copy), startRow,
+                                      endRow));
+    }
+
+    for (int i = 0; i < NUMTHREADS; i++) {
+        threads[i].join();
     }
 }
 
@@ -127,7 +141,7 @@ void init(SDL_Window *&win, SDL_Renderer *&render) {
 }
 
 // Draw frame
-void draw(SDL_Renderer *&render, std::array<std::array<bool, MAPWIDTH>, MAPHEIGHT> map) {
+void draw(SDL_Renderer *&render, const std::array<std::array<bool, MAPWIDTH>, MAPHEIGHT> &map) {
     SDL_SetRenderDrawColor(render, 255, 255, 255, 255);
     SDL_RenderClear(render);
 
@@ -164,16 +178,16 @@ int main() {
     initRandomMap(map);
     
     // create specific patterns
-    //initGosperGliderGun(map);
-    //initPufferTrain(map);
-    //initSimkinGliderGun(map);
+    // initGosperGliderGun(map);
+    // initPufferTrain(map);
+    // initSimkinGliderGun(map);
 
     draw(render, map);
 
     int timeCounter = 0;
     bool isQuit = false;
     SDL_Event event;
-
+    
     // Main loop
     while (!isQuit) {
         if (SDL_PollEvent(&event)) {

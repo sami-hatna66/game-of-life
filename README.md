@@ -9,7 +9,7 @@ The Game of Life is a cellular automaton developed by mathematician John Conway.
 
 These four data-manipulation rules are Turing complete - meaning that anything that can be computed algorithmically can be computed within the universe of the Game of Life. Many mathematicians have catalogued numerous different patterns which occur in the Game of Life. These patterns can be categorised into still-lifes, oscillators and gliders.
 
-My implementation of the Game of Life is written in C++, using SDL2 for the 2D graphics. main.cpp contains a function for running the Game of Life on a randomly generated grid of cells, as well as functions for creating three common patterns: Simkin's Glider Gun, Gosper's Puffer Train and Gosper's Glider Gun.
+My implementation of the Game of Life is written in C++, using SDL2 for the 2D graphics. Execution is accelerated using C++ `std::threads`. main.cpp contains a function for running the Game of Life on a randomly generated grid of cells, as well as functions for creating three common patterns: Simkin's Glider Gun, Gosper's Puffer Train and Gosper's Glider Gun.
 
 ## Demo
 
